@@ -1,0 +1,47 @@
+name: Deploy XVR Mail Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract ZIP
+        run: |
+          mkdir site
+          unzip XVR-Mail-Web-v1.zip -d site
+          INDEX=$(find site -type f -name index.html -print -quit)
+          if [ -z "$INDEX" ]; then
+            echo "index.html tidak ditemukan"
+            exit 1
+          fi
+          mkdir public
+          cp -R "$(dirname "$INDEX")"/. public/
+
+      - name: Upload Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
